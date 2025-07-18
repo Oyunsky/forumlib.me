@@ -1,7 +1,9 @@
+from enum import Enum
+
 import httpx
 
 
-class Category:
+class Category(str, Enum):
     ВСЕ = 'all'
     БАГИ_И_ПРОБЛЕМЫ = '1'
     ПРЕДЛОЖЕНИЯ_ДЛЯ_САЙТА = '2'
@@ -18,7 +20,7 @@ class Category:
     ДРУГОЕ = '13'
 
 
-class Sort:
+class Sort(str, Enum):
     НОВЫЕ = 'newest'
     ПО_ОБНОВЛЕНИЮ = 'updates'
     ОБСУЖДАЕМЫЕ = 'popular'
@@ -32,10 +34,6 @@ class Options:
         self.path = path
         self.params = params
 
-    def __repr__(self):
-        repr_fields = ', '.join(f'{s}: {getattr(self, s)!r}' for s in self.__slots__)
-        return f'Options({repr_fields})'
-
     @classmethod
     def get(cls, path, *, params=None):
         return cls('GET', path, params=params)
@@ -43,23 +41,18 @@ class Options:
 
 class BaseClient:
     __slots__ = ('_base_url', '_api_endpoint')
-
     _client = None
 
-    def __init__(self, base_url, api_endpoint):
+    def __init__(self, *, base_url, api_endpoint):
         self._base_url = base_url.rstrip('/')
         self._api_endpoint = api_endpoint.strip('/')
 
     def _build_url(self, path):
-        stripped = path.lstrip('/')
-        return f'{self._base_url}/{self._api_endpoint}/{stripped}'
-
-    def _build_headers(self):
-        return {**self.default_headers}
+        return f'{self._base_url}/{self._api_endpoint}/{path.lstrip("/")}'
 
     def _build_request(self, options):
         return self._client.build_request(
-            headers=self._build_headers(),
+            headers=self.default_headers,
             method=options.method,
             url=self._build_url(options.path),
             params=options.params,
@@ -67,18 +60,14 @@ class BaseClient:
 
     @property
     def default_headers(self):
-        return {
-            'Accept': 'applicatino/json',
-            'User-Agent': 'python-forumlib/1.0.0'
-        }
+        return {'User-Agent': 'python-forumlib/1.0.0'}
 
 
 class SyncAPIClient(BaseClient):
     __slots__ = ('_client',)
 
-    def __init__(self, base_url, api_endpoint):
-        super().__init__(base_url, api_endpoint)
-
+    def __init__(self, *, base_url, api_endpoint):
+        super().__init__(base_url=base_url, api_endpoint=api_endpoint)
         self._client = httpx.Client()
 
     def close(self):
@@ -92,32 +81,32 @@ class SyncAPIClient(BaseClient):
         self.close()
 
     def request(self, options):
-        request = self._build_request(options)
-        response = self._client.send(request)
-        if response.status_code != 200:
-            print(f'ERROR: request: failed to send request {response.status_code} {response.reason}')
-            return None
         try:
+            request = self._build_request(options)
+            response = self._client.send(request)
+            response.raise_for_status()
             return response.json()
+        except httpx.RequestError as err:
+            print(f'ERROR: request failed: {err}')
+        except httpx.HTTPStatusError as err:
+            print(f'ERROR: status error: {err.response.status_code}, {err.response.text}')
         except Exception as err:
-            print(f'ERROR: request: {err}')
-            return None
+            print(f'ERROR: unexpected error: {err}')
 
     def get(self, path, *, params=None):
-        options = Options.get(path, params=params)
-        return self.request(options)
+        return self.request(Options.get(path, params=params))
 
 
 class ForumLib(SyncAPIClient):
-    def __init__(self, base_url=None, api_endpoint=None):
+    def __init__(self, *, base_url=None, api_endpoint=None):
         if not base_url:
             base_url = 'https://forumlib.me'
         if not api_endpoint:
             api_endpoint = '/api/forum'
-        super().__init__(base_url, api_endpoint)
+        super().__init__(base_url=base_url, api_endpoint=api_endpoint)
 
     def get_category(self, category=Category.ВСЕ, *, page=1, sort=Sort.НОВЫЕ):
-        params = {'category': category, 'page': page, 'sort': sort}
+        params = {'category': category.value, 'page': page, 'sort': sort.value}
         return self.get('/discussion', params=params)
 
     def get_discussion(self, discussion_id):
@@ -128,11 +117,6 @@ class ForumLib(SyncAPIClient):
         return self.get('/posts', params=params)
 
 
-def main():
-    with ForumLib() as flib:
-        xs = flib.get_category()
-        print(xs)
-
-
 if __name__ == '__main__':
-    main()
+    with ForumLib() as flib:
+        print(flib.get_category())

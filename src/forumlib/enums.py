@@ -1,24 +1,26 @@
+__all__ = ['Category', 'Sort']
+
 from enum import Enum
 
 
 class Category(str, Enum):
-    ВСЕ = 'all'
-    БАГИ_И_ПРОБЛЕМЫ = '1'
-    ПРЕДЛОЖЕНИЯ_ДЛЯ_САЙТА = '2'
-    ПОИСК_ТАЙТЛОВ = '3'
-    ПОИСК_КАДРОВ = '4'
-    ОБСУЖДЕНИЕ_МАНГИ = '5'
-    ОБСУЖДЕНИЕ_АНИМЕ = '6'
-    ОБСУЖДЕНИЕ_РАНОБЭ = '7'
-    ВИДЕОИГРЫ = '8'
-    ПЕРЕВОДЧИКАМ = '9'
-    КАК_ПЕРЕВОДИТЬ_МАНГУ = '10'
-    КАК_РИСОВАТЬ_МАНГУ = '11'
-    ОБЩЕНИЕ = '12'
-    ДРУГОЕ = '13'
+    ALL = 'all'
+    BUGS_AND_ISSUES = '1'
+    SITE_SUGGESTIONS = '2'
+    TITLE_SEARCH = '3'
+    JOB_SEARCH  = '4'
+    MANGA_DISCUSSION = '5'
+    ANIME_DISCUSSION = '6'
+    RANOBE_DISCUSSION = '7'
+    VIDEO_GAMES = '8'
+    FOR_TRANSLATORS = '9'
+    HOW_TO_TRANSLATE_MANGA = '10'
+    HOW_TO_DRAW_MANGA = '11'
+    GENERAL_CHAT = '12'
+    OTHER = '13'
 
 
 class Sort(str, Enum):
-    НОВЫЕ = 'newest'
-    ПО_ОБНОВЛЕНИЮ = 'updates'
-    ОБСУЖДАЕМЫЕ = 'popular'
+    NEWEST = 'newest'
+    UPDATES = 'updates'
+    POPULAR = 'popular'

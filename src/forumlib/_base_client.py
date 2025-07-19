@@ -1,61 +1,101 @@
+from __future__ import annotations
+
+__all__ = ['BaseClient', 'SyncAPIClient']
+
+from types import TracebackType
+from typing import Dict, Type, Generic, TypeVar, Optional
+
 import httpx
+from httpx import Request
 
-from ._models import Options
+from ._exceptions import ForumLibException
+from ._types import Query, ResponseT, RequestOptions
 
 
-class BaseClient:
+_T = TypeVar('_T')
+_HttpxClientT = TypeVar('_HttpxClientT', bound=httpx.Client)
+
+
+class BaseClient(Generic[_HttpxClientT]):
     __slots__ = ('_base_url', '_api_endpoint')
-    _client = None
 
-    def __init__(self, *, base_url, api_endpoint):
+    _client: _HttpxClientT
+    _base_url: str
+    _api_endpoint: str
+
+    def __init__(self, *, base_url: str, api_endpoint: str) -> None:
         self._base_url = base_url.rstrip('/')
         self._api_endpoint = api_endpoint.strip('/')
 
-    def _build_url(self, path):
+    def _build_url(self, path: str) -> str:
         return f'{self._base_url}/{self._api_endpoint}/{path.lstrip("/")}'
 
-    def _build_request(self, options):
+    def _prepare_params(self, params: Query) -> Query:
+        prepped = {}
+        for key, value in params.items():
+            if key == 'page':
+                if not isinstance(value, int):
+                    raise TypeError(f'Key `page` must be int, got {type(value).__name__}')
+                prepped[key] = max(1, value)
+            else:
+                prepped[key] = value
+        return prepped
+
+    def _build_request(self, options: RequestOptions) -> Request:
+        url = self._build_url(options.path)
+        prepped_params = self._prepare_params(options.params or {})
+
         return self._client.build_request(
             headers=self.default_headers,
             method=options.method,
-            url=self._build_url(options.path),
-            params=options.params,
+            url=url,
+            params=prepped_params
         )
 
     @property
-    def default_headers(self):
+    def default_headers(self) -> Dict[str, str]:
         return {'User-Agent': 'python-forumlib/1.0.0'}
 
 
 class SyncAPIClient(BaseClient):
     __slots__ = ('_client',)
 
-    def __init__(self, *, base_url, api_endpoint):
+    _client: httpx.Client
+
+    def __init__(self, *, base_url: str, api_endpoint: str) -> None:
         super().__init__(base_url=base_url, api_endpoint=api_endpoint)
+
         self._client = httpx.Client()
 
-    def close(self):
+    def close(self) -> None:
         if hasattr(self, '_client'):
             self._client.close()
 
-    def __enter__(self):
+    def __enter__(self: _T) -> _T:
         return self
 
-    def __exit__(self, *args):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         self.close()
 
-    def request(self, options):
+    def request(self, options: RequestOptions) -> ResponseT:
         try:
             request = self._build_request(options)
             response = self._client.send(request)
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as err:
-            print(f'ERROR: request failed: {err}')
+            raise ForumLibException(f'Network error while sending request: {err}')
         except httpx.HTTPStatusError as err:
-            print(f'ERROR: status error: {err.response.status_code}, {err.response.text}')
+            raise ForumLibException(f'Status error: {err.response.status_code}, {err.response.text}')
+        except ValueError as err:
+            raise ForumLibException(f'Failed to parse JSON from response: {err}')
         except Exception as err:
-            print(f'ERROR: unexpected error: {err}')
+            raise ForumLibException(f'Unexpected error: {err}')
 
-    def get(self, path, *, params=None):
-        return self.request(Options.get(path, params=params))
+    def get(self, path: str, *, params: Optional[Query] = None) -> ResponseT:
+        return self.request(RequestOptions.get(path, params=params))

@@ -1,4 +1,3 @@
-from ._client import ForumLib
-
-
 __all__ = ['ForumLib']
+
+from ._client import ForumLib

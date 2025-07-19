@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-__all__ = ['IntOrStr', 'Query', 'ResponseT', 'RequestOptions']
+__all__ = ['AnyMapping', 'IntOrStr', 'Query', 'ResponseT', 'RequestOptions']
 
 from typing import Any, Dict, List, Type, Union, TypeVar, Mapping, Optional
 
 
 _T = TypeVar('_T', bound='RequestOptions')
 
+AnyMapping = Mapping[str, Any]
 IntOrStr = Union[int, str]
 Query = Mapping[str, Optional[Union[str, int, float, bool]]]
 ResponseT = Optional[Union[Dict[str, Any], List[Any]]]

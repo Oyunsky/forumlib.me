@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ['Category', 'Discussion', 'Post']
+__all__ = ['Discussion', 'Category', 'Comment']
 
 from typing import (
     Any,
@@ -34,7 +34,16 @@ class BaseModel:
         return f'{self.__class__.__name__}({fields})'
 
     def to_dict(self) -> Dict[str, Any]:
-        return {f: getattr(self, f) for f in self.__fields__}
+        def serialize(value: Any) -> Any:
+            if isinstance(value, BaseModel):
+                return value.to_dict()
+            elif isinstance(value, list):
+                return [serialize(item) for item in value]
+            elif isinstance(value, dict):
+                return {k: serialize(v) for k, v in value.items()}
+            else:
+                return value
+        return {f: serialize(getattr(self, f)) for f in self.__fields__}
 
     @classmethod
     def parse(cls: Type[_T], data: AnyMapping) -> _T:
@@ -74,7 +83,7 @@ class DiscussionBody(BaseModel):
     title: str
     user_id: int
     source_id: int
-    source_type: int
+    source_type: str
     sticky: int
     locked: int
     views: int
@@ -84,13 +93,13 @@ class DiscussionBody(BaseModel):
     updated_at: str
     deleted_at: str
     yaoi: int
-    username: str
-    avatar: str
     category_id: int
     category_name: str
     category_slug: str
     category_color: str
     category_icon: str
+    username: str
+    avatar: str
     relation: str
 
 
@@ -110,13 +119,66 @@ class Discussion(BaseModel):
     post: Post
 
 
+class CategoryBody(BaseModel):
+    id: int
+    chatter_category_id: int
+    title: str
+    user_id: int
+    source_id: int
+    source_type: str
+    sticky: int
+    locked: int
+    views: int
+    answered: int
+    last_reply_at: str
+    created_at: str
+    updated_at: str
+    deleted_at: str
+    yaoi: int
+    category_id: int
+    category_name: str
+    category_slug: str
+    category_color: str
+    username: str
+    avatar: str
+    body: dict # TODO
+
+
 class Category(BaseModel):
     current_page: int
-    data: List[Discussion]
+    data: List[CategoryBody]
     first_page_url: str
     from_: int
     next_page_url: str
     path: str
     per_page: int
     prev_page_url: int
+    to: int
+
+
+class CommentBody(BaseModel):
+    id: int
+    post_id: int
+    chatter_category_id: int
+    user_id: int
+    body: dict # TODO
+    created_at: str
+    updated_at: str
+    deleted_at: str
+    username: str
+    avatar: str
+    reply_username: str
+    reply_user_id: int
+    user_role: str
+
+
+class Comment(BaseModel):
+    current_page: int
+    data: List[CommentBody]
+    first_page_url: str
+    from_: int
+    next_page_url: str
+    page: str
+    per_page: int
+    prev_page_url: str
     to: int

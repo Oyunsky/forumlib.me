@@ -10,7 +10,7 @@ _T = TypeVar('_T', bound='RequestOptions')
 AnyMapping = Mapping[str, Any]
 IntOrStr = Union[int, str]
 Query = Mapping[str, Optional[Union[str, int, float, bool]]]
-ResponseT = Optional[Union[Dict[str, Any], List[Any]]]
+ResponseT = Optional[Union[Mapping[str, Any], List[Any]]]
 
 
 class RequestOptions:

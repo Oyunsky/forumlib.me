@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ['Discussion', 'Category', 'Comment']
+__all__ = ['DiscussionModel', 'CategoryModel', 'CommentModel']
 
 from typing import (
     Any,
@@ -77,7 +77,7 @@ class BaseModel:
         return [cls.parse(item) for item in data_list]
 
 
-class DiscussionBody(BaseModel):
+class Discussion(BaseModel):
     id: int
     chatter_category_id: int
     title: str
@@ -114,12 +114,12 @@ class Post(BaseModel):
     deleted_at: str
 
 
-class Discussion(BaseModel):
-    discussion: DiscussionBody
+class DiscussionModel(BaseModel):
+    discussion: Discussion
     post: Post
 
 
-class CategoryBody(BaseModel):
+class Category(BaseModel):
     id: int
     chatter_category_id: int
     title: str
@@ -144,9 +144,9 @@ class CategoryBody(BaseModel):
     body: dict # TODO
 
 
-class Category(BaseModel):
+class CategoryModel(BaseModel):
     current_page: int
-    data: List[CategoryBody]
+    data: List[Category]
     first_page_url: str
     from_: int
     next_page_url: str
@@ -156,7 +156,7 @@ class Category(BaseModel):
     to: int
 
 
-class CommentBody(BaseModel):
+class Comment(BaseModel):
     id: int
     post_id: int
     chatter_category_id: int
@@ -172,9 +172,9 @@ class CommentBody(BaseModel):
     user_role: str
 
 
-class Comment(BaseModel):
+class CommentModel(BaseModel):
     current_page: int
-    data: List[CommentBody]
+    data: List[Comment]
     first_page_url: str
     from_: int
     next_page_url: str

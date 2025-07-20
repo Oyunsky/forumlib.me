@@ -4,10 +4,10 @@ __all__ = ['ForumLib']
 
 from typing import Optional
 
-from . import enums
-from ._types import ResponseT, IntOrStr
-from ._models import Discussion, Category, Comment
 from ._base_client import SyncAPIClient
+from .enums import Category, Sort
+from ._types import ResponseT, IntOrStr
+from ._models import DiscussionModel, CategoryModel, CommentModel
 
 
 class ForumLib(SyncAPIClient):
@@ -25,20 +25,20 @@ class ForumLib(SyncAPIClient):
 
     def get_category(
         self,
-        category: enums.Category = enums.Category.ALL,
+        category: Category = Category.ALL,
         *,
         page: int = 1,
-        sort: enums.Sort = enums.Sort.NEWEST
-    ) -> Category:
+        sort: Sort = Sort.NEWEST,
+    ) -> CategoryModel:
         params = {'category': category.value, 'page': page, 'sort': sort.value}
         data = self.get('/discussion', params=params)
-        return Category.parse(data) # type: ignore
+        return CategoryModel.parse(data) # type: ignore
 
-    def get_discussion(self, discussion_id: IntOrStr) -> Discussion:
+    def get_discussion(self, discussion_id: IntOrStr) -> DiscussionModel:
         data = self.get(f'/discussion/{discussion_id}')
-        return Discussion.parse(data) # type: ignore
+        return DiscussionModel.parse(data) # type: ignore
 
-    def get_comments(self, discussion_id: IntOrStr, *, page: int = 1) -> Comment:
+    def get_comments(self, discussion_id: IntOrStr, *, page: int = 1) -> CommentModel:
         params = {'discussion_id': discussion_id, 'page': page}
         data = self.get('/posts', params=params)
-        return Comment.parse(data) # type: ignore
+        return CommentModel.parse(data) # type: ignore

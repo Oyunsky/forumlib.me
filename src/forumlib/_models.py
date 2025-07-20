@@ -108,7 +108,7 @@ class Post(BaseModel):
     post_id: int
     chatter_category_id: int
     user_id: int
-    body: dict # TODO
+    body: Dict[str, Any]
     created_at: str
     updated_at: str
     deleted_at: str
@@ -141,7 +141,7 @@ class Category(BaseModel):
     category_color: str
     username: str
     avatar: str
-    body: dict # TODO
+    body: Dict[str, Any]
 
 
 class CategoryModel(BaseModel):
@@ -161,7 +161,7 @@ class Comment(BaseModel):
     post_id: int
     chatter_category_id: int
     user_id: int
-    body: dict # TODO
+    body: Dict[str, Any]
     created_at: str
     updated_at: str
     deleted_at: str

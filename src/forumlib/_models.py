@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = ['DiscussionModel', 'CategoryModel', 'CommentModel']
 
+import json
 from typing import (
     Any,
     Dict,
@@ -60,6 +61,8 @@ class BaseModel:
 
             if f_type_origin is list:
                 item_type = f_type_args[0] if f_type_args else None
+                if f_key == 'ops' and isinstance(data, str):
+                    data = json.loads(data) # type: ignore
                 if item_type and isinstance(item_type, type) and issubclass(item_type, BaseModel):
                     result[f_key] = [item_type.parse(item) for item in data[f_key]]
                 elif item_type:
@@ -75,6 +78,29 @@ class BaseModel:
     @classmethod
     def parse_many(cls: Type[_T], data_list: List[AnyMapping]) -> List[_T]:
         return [cls.parse(item) for item in data_list]
+
+
+class Attributes(BaseModel):
+    italic: bool
+    bold: bool
+    link: str
+
+
+class Ops(BaseModel):
+    attributes: Attributes
+    insert: str
+
+
+class Body(BaseModel):
+    ops: List[Ops]
+
+
+class Relation(BaseModel):
+    id: int
+    cover: str
+    slug: str
+    value: str
+    href: str
 
 
 class Discussion(BaseModel):
@@ -100,7 +126,7 @@ class Discussion(BaseModel):
     category_icon: str
     username: str
     avatar: str
-    relation: str
+    relation: Relation
 
 
 class Post(BaseModel):
@@ -108,7 +134,7 @@ class Post(BaseModel):
     post_id: int
     chatter_category_id: int
     user_id: int
-    body: Dict[str, Any]
+    body: Body
     created_at: str
     updated_at: str
     deleted_at: str
@@ -141,7 +167,7 @@ class Category(BaseModel):
     category_color: str
     username: str
     avatar: str
-    body: Dict[str, Any]
+    body: Body
 
 
 class CategoryModel(BaseModel):
@@ -161,7 +187,7 @@ class Comment(BaseModel):
     post_id: int
     chatter_category_id: int
     user_id: int
-    body: Dict[str, Any]
+    body: Body
     created_at: str
     updated_at: str
     deleted_at: str

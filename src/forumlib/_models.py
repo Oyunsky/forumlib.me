@@ -52,7 +52,7 @@ class BaseModel:
         hints = get_type_hints(cls, globals(), locals())
         for f_key, f_type in hints.items():
             f_key = f_key.rstrip('_')
-            if f_key not in data:
+            if hasattr(data, '__iter__') and f_key not in data:
                 result[f_key] = None
                 continue
 
@@ -72,7 +72,7 @@ class BaseModel:
             elif isinstance(f_type, type) and issubclass(f_type, BaseModel):
                 result[f_key] = f_type.parse(data[f_key])
             else:
-                result[f_key] = data[f_key]
+                result[f_key] = data[f_key] if data else None
         return cls(**result)
 
     @classmethod

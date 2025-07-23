@@ -91,8 +91,23 @@ class Ops(BaseModel):
     insert: str
 
 
+class KeyValue(BaseModel):
+    name: str
+    version: str
+
+
+class UserAgent(BaseModel):
+    platform: KeyValue
+    browser: KeyValue
+    device: str
+    isDesktop: bool
+    isTablet: bool
+    isPhone: bool
+
+
 class Body(BaseModel):
     ops: List[Ops]
+    userAgent: UserAgent
 
 
 class Relation(BaseModel):
@@ -126,6 +141,7 @@ class Discussion(BaseModel):
     category_icon: str
     username: str
     avatar: str
+    notification: bool
     relation: Relation
 
 
